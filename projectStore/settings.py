@@ -81,17 +81,21 @@ WSGI_APPLICATION = 'projectStore.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.sqlite3',
-    #     'NAME': BASE_DIR / 'db.sqlite3',
-    # },
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('NAME_PGDB'),
-        'USER': os.getenv('USER_PGDB'),
-        'PASSWORD': os.getenv('PASSWORD_PGDB'),
-        'HOST': os.getenv('HOST_PGDB'),
-        'PORT': os.getenv('PORT_PGDB'),
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    },
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.postgresql',
+    #     'NAME': os.getenv('NAME_PGDB'),
+    #     'USER': os.getenv('USER_PGDB'),
+    #     'PASSWORD': os.getenv('PASSWORD_PGDB'),
+    #     'HOST': os.getenv('HOST_PGDB'),
+    #     'PORT': os.getenv('PORT_PGDB'),
+    # },
+    'test': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'test_db.sqlite3',
     },
 }
 
@@ -135,7 +139,14 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [Path.joinpath(BASE_DIR, 'static')]
+# STATICFILES_DIRS = [Path.joinpath(BASE_DIR, 'static')]
+# STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+if 'localhost' in ALLOWED_HOSTS:
+   STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+else:
+   STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
