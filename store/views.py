@@ -1,7 +1,7 @@
 from datetime import datetime
 from random import random
 
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.views import View
 from django.http import HttpResponse
 from django.db.models import OuterRef, Subquery, F, ExpressionWrapper, DecimalField, Case, When
@@ -10,8 +10,8 @@ from django.utils import timezone
 from rest_framework import viewsets, response
 from rest_framework.permissions import IsAuthenticated
 
-from .models import Product, Discount, Cart
-from .serializers import CartSerializer
+from .models import Product, Discount, Cart, Wishlist
+from .serializers import CartSerializer, WishlistSerializer
 
 
 class CurrentDateView(View):
@@ -269,4 +269,38 @@ class CartViewSet(viewsets.ModelViewSet):
         # В этот раз напишем примерно так как это делает фреймворк самостоятельно
         cart_item = self.get_queryset().get(id=kwargs['pk'])
         cart_item.delete()
+        return response.Response({'message': 'Product delete from cart'}, status=201)
+
+
+class WishlistView(View):
+
+    def get(self, request):
+        if request.user.is_authenticated:
+            # print(request.user, type(request.user))
+            wishlist = Wishlist.objects.filter(user=request.user)
+            # код который необходим для обработчика
+            return render(request, "store/wishlist.html", {"data": wishlist})
+        # Иначе отправляет авторизироваться
+        return redirect('login:login')
+
+
+class WishlistViewSet(viewsets.ModelViewSet):
+    queryset = Wishlist.objects.all()
+    serializer_class = WishlistSerializer
+    permission_classes = (IsAuthenticated, )
+
+    def get_queryset(self):
+        return self.queryset.filter(user=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        cart_items = self.get_queryset().filter(product__id=request.data.get('product'))
+        if not cart_items:  # Если продукта нет в избранном
+            product = get_object_or_404(Product, id=request.data.get('product'))
+            wishlist_item = Wishlist(user=request.user, product=product)
+            wishlist_item.save()
+        return response.Response({'message': 'Product added to wishlist'}, status=201)
+
+    def destroy(self, request, *args, **kwargs):
+        wishlist_item = self.get_queryset().get(id=kwargs['pk'])
+        wishlist_item.delete()
         return response.Response({'message': 'Product delete from cart'}, status=201)
