@@ -304,3 +304,30 @@ class WishlistViewSet(viewsets.ModelViewSet):
         wishlist_item = self.get_queryset().get(id=kwargs['pk'])
         wishlist_item.delete()
         return response.Response({'message': 'Product delete from cart'}, status=201)
+
+
+class AddToWishlistView(View):
+    def get(self, request, product_id):
+        if request.user.is_authenticated:
+            product = get_object_or_404(Product, id=product_id)
+            wishlist_item = Wishlist.objects.filter(user=request.user, product=product)
+            if wishlist_item.exists():
+                return redirect(request.META.get('HTTP_REFERER', '/'))
+            else:
+                wishlist_item = Wishlist.objects.create(user=request.user, product=product)
+                wishlist_item.save()
+                return redirect(request.META.get('HTTP_REFERER', '/'))
+        else:
+            return redirect('/login/')
+
+
+class RemoveFromWishlistView(View):
+    def get(self, request, product_id):
+        try:
+            wishlist_item = Wishlist.objects.get(user=request.user, product_id=product_id)
+        except Wishlist.DoesNotExist:
+            return redirect('store:wishlist')
+
+        wishlist_item.delete()
+
+        return redirect('store:wishlist')
